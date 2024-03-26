@@ -10,20 +10,19 @@ import SwiftData
 
 struct DashboardView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query private var cards: [CardModel]
+    @Query private var cardList: [CardModel]
 
     var body: some View {
         NavigationView {
-            VStack {
-                if cards.isEmpty {
+            VStack(alignment: .leading) {
+                if cardList.isEmpty {
                     start
                 } else {
-                    cards.first.flatMap { model in
-                        content(with: model)
-                    }
+                    content()
                 }
             }
-            .navigationTitle("Scratchy")
+            .padding()
+            .navigationTitle("Scratch card")
         }
     }
 
@@ -38,44 +37,69 @@ struct DashboardView: View {
         )
     }
 
-    private func content(with model: CardModel) -> some View {
-        VStack(
-            alignment: .leading,
-            spacing: 12) {
-                CardView(title: model.cardId)
+    private func content() -> some View {
+        cardList.first.flatMap { model in
+            VStack(
+                alignment: .leading,
+                spacing: 12) {
+                    HStack {
+                        CardView(title: model.cardId)
 
-                Text("Activated: \(model.activated)")
-
-                NavigationLink {
-                    ScratchView(viewModel: ScratchVM(), card: model)
-                } label: {
-
-                    Text("Scratch!")
-                }
-                .disabled(!model.cardId.isEmpty)
-
-                NavigationLink{
-                    ActivationView(card: model, viewModel: ActivationVM())
-                } label: {
-                    Text("Activate!")
-                }
-                .disabled(model.cardId.isEmpty)
-
-                Spacer()
-
-                Button(
-                    action: {
-                        reset()
-                    }, label: {
-                        Text("Reset")
+                        Spacer()
                     }
-                )
-            }
+
+                    HStack {
+                        Text(model.activated ? "Activated" : "Not activated")
+
+                        Image(systemName: model.activated ? "checkmark.seal" : "exclamationmark.triangle")
+                            .foregroundStyle(model.activated ? .green : .orange)
+                    }
+
+                    Divider()
+
+                    NavigationLink {
+                        ScratchView(viewModel: ScratchVM(), card: model)
+                    } label: {
+
+                        Text("Scratch")
+                    }
+                    .disabled(!model.cardId.isEmpty)
+
+                    Divider()
+
+                    NavigationLink{
+                        ActivationView(card: model, viewModel: ActivationVM())
+                    } label: {
+                        Text("Activate")
+                    }
+                    .disabled(model.cardId.isEmpty || model.activated)
+
+                    Divider()
+
+                    Button(
+                        action: {
+                            reset()
+                        }, label: {
+                            HStack {
+                                Text("Reset")
+                                    .foregroundStyle(Color.red)
+
+                                Image(systemName: "arrow.clockwise.circle")
+                                    .resizable()
+                                    .frame(width: 20, height: 20)
+                                    .foregroundStyle(Color.red)
+                            }
+                        }
+                    )
+
+                    Spacer()
+                }
+        }
     }
 
     private func reset() {
         withAnimation {
-            cards.first.flatMap({ card in
+            cardList.first.flatMap({ card in
                 modelContext.delete(card)
             })
             modelContext.insert(CardModel(cardId: ""))

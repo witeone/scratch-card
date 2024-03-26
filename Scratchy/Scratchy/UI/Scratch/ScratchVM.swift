@@ -10,19 +10,27 @@ import Combine
 
 class ScratchVM: ObservableObject {
     @Published var isLoading = false
+    @Published var completed = false
+    private var item: DispatchWorkItem? = nil
 
     private var cancellables = [AnyCancellable]()
 
     func scratch(model: CardModel) {
         isLoading = true
-        Deferred {
-            Just(model)
-        }
-        .delay(for: .seconds(2), scheduler: DispatchQueue.main)
-        .sink { [weak self] card in
-            card.cardId = UUID().uuidString
+        completed = false
+        item = DispatchWorkItem { [weak self] in
+            model.cardId = UUID().uuidString
             self?.isLoading = false
+            self?.completed = true
         }
-        .store(in: &cancellables)
+        if let item {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2, execute: item)
+        }
+    }
+
+    func cancel() {
+        item?.cancel()
+        isLoading = false
+        completed = false
     }
 }

@@ -8,7 +8,8 @@
 import SwiftUI
 
 struct CardView: View {
-    var title: String? = nil
+    var title: String
+    var isLoading = false
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 20)
@@ -22,19 +23,24 @@ struct CardView: View {
                         endPoint: .bottomTrailing
                     ))
 
-            Text({
-                if let title {
-                    title
-                } else {
-                    "Scratch to reveal your code!"
-                }
-            }())
-            .padding()
+            if isLoading {
+                ProgressView()
+            } else {
+                Text({
+                    if !title.isEmpty {
+                        title
+                    } else {
+                        "Scratch to reveal your code!"
+                    }
+                }())
+                .foregroundStyle(title.isEmpty ? Color.gray : Color.black)
+                .padding()
+            }
         }
         .frame(width: 250, height: 250)
     }
 }
 
 #Preview {
-    CardView()
+    CardView(title: "")
 }

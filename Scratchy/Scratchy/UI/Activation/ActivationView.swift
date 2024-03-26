@@ -9,24 +9,28 @@ import SwiftUI
 
 struct ActivationView: View {
     let card: CardModel
-    let viewModel: ActivationVM
+    @StateObject var viewModel: ActivationVM
 
     var body: some View {
         VStack {
-
-            if viewModel.isLoading {
-                ProgressView {
-                    Text("Loading...")
+            Button {
+                Task {
+                    try await viewModel.activate(card: card)
                 }
-            } else {
-                Button {
-                    Task {
-                        try await viewModel.activate(card: card)
-                    }
-                } label: {
-                    Text("Activate")
-                }
+            } label: {
+                Text("Activate")
             }
+
+            if let version = card.version {
+                Text("Version: \(version)")
+            }
+        }
+        .alert(isPresented: $viewModel.error) {
+            Alert(
+                title: Text("Error"),
+                message: Text("Activation failed"), 
+                dismissButton: .default(Text("Ok"))
+            )
         }
 
     }
